@@ -11,7 +11,7 @@
 
 <body>
     <div class="register">
-        <p class="title">
+        <p class="title" id="title">
             <span>SignIn</span>
             <span class="current">SignUp</span>
         </p>
@@ -19,19 +19,136 @@
             <div>
                 <span>+86</span>
                 <input type="text" name="user" id="user" placeholder="Please enter phone number" autocomplete="off">
-                <i class="ok"></i>
-                <p class="info">The number was register</p>
+                <i id="user_icon"></i>
+                <p class="info" id="user_info"></p>
             </div>
             <div>
                 <input type="password" name="password" id="password" placeholder="Enter password">
-                <i class="no"></i>
-                <p class="info"></p>
+                <i id="pwd_icon"></i>
+                <p class="info" id="pwd_info"></p>
             </div>
             <p class="button">
-                <a href="javascript:void(0)" id="signup-btn" class="btn">Sign Up</a>
+                <a href="javascript:void(0)" id="signup-btn" class="btn show">Sign Up</a>
+                <a href="javascript:void(0)" id="login-btn" class="btn">Log In</a>
             </p>
         </div>
     </div>
+    <script src="js/ajax.js"></script>
+    <script>
+        var user = document.getElementById("user"),
+            pwd = document.getElementById("password"),
+            signup = document.getElementById("signup-btn"),
+            login = document.getElementById("login-btn"),
+            titles = document.getElementById("title").getElementsByTagName("span"),
+            userInfo = document.getElementById("user_info"),
+            userIcon = document.getElementById("user_icon"),
+            pwdIcon = document.getElementById("pwd_icon"),
+            pwdInfo = document.getElementById("pwd_info"),
+            userReg = /^1[3578]\d{9}$/,
+            pwdReg = /^\w{5,12}$/,
+            isRepeat = false;
+
+        //
+        function checkUser() {
+            var userVal = user.value;
+            //check if the number is valid
+            if (!userReg.test(userVal)) {
+                userInfo.innerHTML = 'This number is invalid';
+                userIcon.className = 'no';
+            } else {
+                userInfo.innerHTML = '';
+                userIcon.className = '';
+
+                //ajax request for check username
+                $.ajax({
+                    url: 'http://localhost:8888/isUserRepeat.php',
+                    method: "post",
+                    data: {
+                        username: userVal
+                    },
+                    success: function (data) {
+
+                        if (data.code == 1) {
+                            userIcon.className = 'ok';
+                            isRepeat = false;
+                        } else if (data.code == 0) {
+                            userIcon.className = 'no';
+                            isRepeat = true;
+                            userInfo.innerHTML = data.msg;
+                        } else {
+                            userInfo.innerHTML = 'fail,please retry';
+                        }
+                    }
+
+                })
+            }
+        }
+
+        function checkpwd() {
+            var pwdVal = pwd.value;
+            if (!pwdReg.test(pwdVal)) {
+                pwdInfo.innerHTML = "please enter 5--12 letters, number, and _"
+                pwdIcon.className = 'no';
+            } else {
+                pwdInfo.innerHTML = ""
+                pwdIcon.className = 'ok';
+            }
+        }
+
+        function register() {
+            var user_val = user.value,
+                pwd_val = pwd.value;
+            if (userReg.test(user.value) && (pwdReg.test(pwd.value)) && !isRepeat) {
+                console.log("ok");
+                //create ajax request for register
+                $.ajax({
+                    url: "http://localhost:8888/register.php",
+                    method: "post",
+                    data: {
+                        username: user_val,
+                        userpwd: pwd_val
+                    },
+                    success: function (data) {
+                        alert("Register successfully");
+                        //register successfully and show login view
+                        showLogin();
+                        //eliminate the text of user and pwd
+                        user.value = "";
+                        pwd.value = "";
+                    },
+                    error: function () {
+                        pwdInfo.innerHTML = 'Register Fail';
+                    }
+
+                })
+            }
+        }
+        //show login button
+        function showLogin() {
+            titles[0].className = "current";
+            titles[1].className = "";
+            login.className = "show";
+            signup.className = "";
+        }
+
+        //show signup button
+        function showSignup() {
+            titles[1].className = "current";
+            titles[0].className = "";
+            login.className = "";
+            signup.className = "show";
+        }
+        //add event for checking username
+        user.addEventListener("blur", checkUser, false);
+        //add event for checking password
+        pwd.addEventListener("blur", checkpwd, false);
+        //add event for register button
+        signup.addEventListener("click", register, false);
+        //add event for show button of login
+        titles[0].addEventListener("click", showLogin, false);
+        //add event for show button of signup
+        titles[1].addEventListener("click", showSignup, false);
+    </script>
 </body>
 
 </html>
